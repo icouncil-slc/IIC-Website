@@ -8,30 +8,6 @@ export default function AddPastEventPage() {
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
 
-  // Access control
-  useEffect(() => {
-    const cookie = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("auth="));
-    if (!cookie) return router.push("/");
-
-    const email = atob(cookie.split("=")[1]);
-
-    fetch(`/api/member?email=${email}`)
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
-      .then(({ permissions }) => {
-        const isAdmin = email === process.env.ADMIN_EMAIL;
-        const hasPermission = permissions?.past_events;
-        if (!isAdmin && !hasPermission) router.push("/");
-      })
-      .catch(() => {
-        router.push("/");
-      });
-  }, [router]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await fetch("/api/add-past-events", {

@@ -1,18 +1,15 @@
-// app/api/admin/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route"; // Import your authOptions
+import { authOptions } from "../auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 
 // Helper function to check if the logged-in user is an admin
 async function isAdminSession(session) {
-  if (!session?.user?.email) return false;
-  // We can trust the role from the session now because our JWT callback keeps it updated.
-  return session.user.role === 'admin';
+  return session?.user?.role === 'Admin';
 }
 
-// GET: Fetch all members (for admin)
+// GET: Fetch ALL users for the admin dashboard
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!await isAdminSession(session)) {
@@ -20,14 +17,16 @@ export async function GET() {
   }
 
   try {
-    const adminUser = await User.findOne({ email: session.user.email });
-    return NextResponse.json({ members: adminUser.members || [] }, { status: 200 });
+    await dbConnect();
+    // This now fetches all users so the admin can manage them
+    const users = await User.find({}).sort({ createdAt: -1 });
+    return NextResponse.json({ users }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
-// POST: Add a new member (for admin)
+// POST: Add or update a user with a role and permissions
 export async function POST(req) {
   const session = await getServerSession(authOptions);
   if (!await isAdminSession(session)) {
@@ -35,29 +34,27 @@ export async function POST(req) {
   }
 
   try {
-    const { email, permissions } = await req.json();
-    if (!email || !permissions) {
-      return NextResponse.json({ error: "Missing email or permissions" }, { status: 400 });
+    await dbConnect();
+    // Now accepts 'role' from the frontend
+    const { email, permissions, role } = await req.json();
+    if (!email || !role) {
+      return NextResponse.json({ error: "Missing email or role" }, { status: 400 });
     }
 
+    // Creates a new user or updates an existing one with the new role and permissions
     await User.findOneAndUpdate(
       { email },
-      { email, isAdmin: false, permissions },
+      { email, role, permissions },
       { upsert: true, new: true }
     );
-
-    await User.findOneAndUpdate(
-      { email: session.user.email },
-      { $addToSet: { members: email } }
-    );
-
-    return NextResponse.json({ message: "Member added successfully" }, { status: 201 });
+    
+    return NextResponse.json({ message: "Member updated successfully" }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
-// DELETE: Remove a member (for admin)
+// DELETE: Remove a member from the database
 export async function DELETE(req) {
   const session = await getServerSession(authOptions);
   if (!await isAdminSession(session)) {
@@ -69,14 +66,15 @@ export async function DELETE(req) {
     if (!memberEmail) {
       return NextResponse.json({ error: "Missing memberEmail" }, { status: 400 });
     }
+    
+    // Safety check: Admins cannot delete their own account.
+    if (memberEmail === session.user.email) {
+      return NextResponse.json({ error: "Admin cannot delete their own account." }, { status: 400 });
+    }
 
-    await User.findOneAndUpdate(
-      { email: session.user.email },
-      { $pull: { members: memberEmail } }
-    );
-
+    // Deletes the user document directly from the User collection
     await User.deleteOne({ email: memberEmail });
-
+    
     return NextResponse.json({ message: "Member deleted successfully" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });

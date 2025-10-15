@@ -31,9 +31,7 @@ export const authOptions = {
 
         // Phase 1: Send OTP
         if (!otp) {
-          const generatedOtp = Math.floor(
-            100000 + Math.random() * 900000
-          ).toString();
+          const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
           const tenMinutesFromNow = new Date(Date.now() + 10 * 60 * 1000);
           await Otp.findOneAndUpdate(
             { email },
@@ -47,18 +45,14 @@ export const authOptions = {
             subject: "Your IIC Login OTP Code",
             text: `Your OTP code is: ${generatedOtp}. It will expire in 10 minutes.`,
           });
-
+          
           throw new Error("OTP_SENT");
         }
 
         // Phase 2: Verify OTP and Authorize User
         if (otp) {
           const otpRecord = await Otp.findOne({ email });
-          if (
-            !otpRecord ||
-            otpRecord.otp !== otp ||
-            new Date() > otpRecord.expiresAt
-          ) {
+          if (!otpRecord || otpRecord.otp !== otp || new Date() > otpRecord.expiresAt) {
             throw new Error("Invalid or expired OTP");
           }
           await Otp.deleteOne({ email });
@@ -68,16 +62,17 @@ export const authOptions = {
             throw new Error("You are not authorized. Please contact an admin.");
           }
 
-          if (user.email === process.env.ADMIN_EMAIL && user.role !== "admin") {
-            user.role = "admin";
+          // This ensures the main admin always has the 'Admin' role in the database.
+          if (user.email === process.env.ADMIN_EMAIL && user.role !== 'Admin') {
+            user.role = 'Admin';
             await user.save();
           }
 
-          return {
-            id: user._id,
-            email: user.email,
-            role: user.role, // <-- Return role instead of isAdmin
-            permissions: user.permissions,
+          return { 
+            id: user._id, 
+            email: user.email, 
+            role: user.role, 
+            permissions: user.permissions 
           };
         }
         return null;
@@ -91,43 +86,57 @@ export const authOptions = {
     maxAge: 3 * 60 * 60, // Session expires in 3 hours
   },
 
-  // 3. Callbacks: The most important part for customizing the session
+  // 3. Callbacks: Customize the session token and behavior.
   callbacks: {
-    async signIn({ user }) {
-      // This function for login history stays the same
-      try {
-        const loginRecord = new LoginHistory({ email: user.email });
-        await loginRecord.save();
-      } catch (error) {
-        console.error("Failed to record login history:", error);
-      }
-      return true;
-    },
+    // This JWT callback keeps the token's permissions up-to-date on every request.
     async jwt({ token, user }) {
-      // This now re-fetches the role and permissions every time
+      // On initial sign-in, add the user's role and permissions to the token.
       if (user) {
-        // On initial sign-in
         token.role = user.role;
         token.permissions = user.permissions;
       }
+      
+      // On subsequent requests, re-fetch the user from the DB to get the latest data.
       const dbUser = await User.findOne({ email: token.email });
       if (dbUser) {
         token.role = dbUser.role;
         token.permissions = dbUser.permissions;
       }
+      
       return token;
     },
+    // This session callback makes the role and permissions available on the client side.
     async session({ session, token }) {
-      // This now passes the role to the client-side session
       if (token) {
         session.user.role = token.role;
         session.user.permissions = token.permissions;
       }
       return session;
-    },
+    }
   },
 
-  // 4. General Settings
+  // 4. Events: Actions that happen on successful authentication events.
+  events: {
+    // This is the best place to record login history as it has access to the request object.
+    async signIn(message) {
+      try {
+        const ip = message.req.headers["x-forwarded-for"] || message.req.socket.remoteAddress;
+        const userAgent = message.req.headers["user-agent"];
+
+        const loginRecord = new LoginHistory({
+          email: message.user.email,
+          ipAddress: ip,
+          userAgent: userAgent,
+        });
+        await loginRecord.save();
+        console.log("LOGIN RECORDED with IP for:", message.user.email);
+      } catch (error) {
+        console.error("Failed to record login history:", error);
+      }
+    }
+  },
+
+  // 5. General Settings
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/admin",

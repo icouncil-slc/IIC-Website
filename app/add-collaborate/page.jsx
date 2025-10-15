@@ -5,30 +5,6 @@ import { useState,useEffect } from "react";
 export default function AddCollaboration() {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
-  const router = useRouter();
-    useEffect(() => {
-        const cookie = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("auth="));
-    
-        if (!cookie) return router.push("/");
-    
-        const email = atob(cookie.split("=")[1]);
-    
-        fetch(`/api/member?email=${email}`)
-          .then((res) => {
-            if (!res.ok) throw new Error();
-            return res.json();
-          })
-          .then(({ permissions }) => {
-            const isAdmin = email === process.env.ADMIN_EMAIL;
-            const hasPermission = permissions?.event;
-            if (!isAdmin && !hasPermission) router.push("/");
-          })
-          .catch(() => {
-            router.push("/");
-          });
-      }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
