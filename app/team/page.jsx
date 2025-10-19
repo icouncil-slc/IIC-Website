@@ -9,7 +9,7 @@ const page = () => {
       <Hero
         title="Meet Our"
         subtitle="Driving innovation with leadership, passion, and collaboration"
-        sec_title="Team Council"
+        sec_title="Council"
         sec_sub="Shyam Lal College : University of Delhi"
         btn1=""
         btn2=""
