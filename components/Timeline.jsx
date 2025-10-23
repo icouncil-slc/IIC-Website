@@ -9,7 +9,9 @@ const events = [
   { year: 2020, title: "Community Building", description: "Competitions, IP Workshops, Mentoring, PoC, Business Plan" },
   { year: 2021, title: "Collaborations", description: "Incubation, Innovation Fairs, Outreach, Startup Policy" },
   { year: 2022, title: "Expanding Impact", description: "IP Rights, Patents, B-Plan Competitions, Innovation Day" },
-  { year: 2023, title: "Innovation Drive", description: "Hackathons, Field Visits, BMC Workshops, Orientation" },
+  { year: 2023, title: "Innovation Drive", description: "Incubation Sessions, Innovation Fair, Outreach, National Startup Day, Viksit Bharat @2047" },
+  { year: 2024, title: "Advancing Innovation Skills", description: "Innovate X Hackathon, Field Visits, BMC Workshop, Ambassador Training, IIC Orientation" },
+  { year: 2025 , title: "From Patent to Product", description: "Shyam Lal College has evolved from fostering ideation and design thinking to driving innovation, incubation, IP awareness, and startup development through hackathons, workshops, and national-level competitions." },
 ];
 
 const Timeline = () => {
