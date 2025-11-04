@@ -3,7 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { EdgeStoreProvider } from '../lib/edgestore';
 import { Toaster } from "@/components/ui/sonner";
-import ChatBot from "@/components/ChatBot";
+import { ChatBot } from "@/components/ChatBot";
 import { Providers } from "./providers";
 
 
