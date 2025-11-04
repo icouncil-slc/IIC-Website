@@ -5,7 +5,10 @@ export default withAuth(
   function middleware(req) {},
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ token }) => {
+        const authorizedRoles = ['Admin', 'Moderator', 'Editor', 'Analyst'];
+        return !!token && authorizedRoles.includes(token.role);
+      },
     },
     pages: {
       signIn: "/admin",
@@ -17,6 +20,7 @@ export default withAuth(
 export const config = {
   matcher: [
     // Protect all the admin UI pages
+    "/manage-team",
     "/add-event",
     "/add-collabrate",
     "/add-sponser",

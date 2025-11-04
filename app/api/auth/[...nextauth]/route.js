@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const authOptions = {
-  // 1. Providers: Defines how users can log in.
+  // 1. Providers
   providers: [
     CredentialsProvider({
       name: "Email and OTP",
@@ -62,7 +62,6 @@ export const authOptions = {
             throw new Error("You are not authorized. Please contact an admin.");
           }
 
-          // This ensures the main admin always has the 'Admin' role in the database.
           if (user.email === process.env.ADMIN_EMAIL && user.role !== 'Admin') {
             user.role = 'Admin';
             await user.save();
@@ -83,53 +82,36 @@ export const authOptions = {
   // 2. Session Configuration
   session: {
     strategy: "jwt",
-    maxAge: 3 * 60 * 60, // Session expires in 3 hours
+    maxAge: 3 * 60 * 60, // 3 hours
   },
 
-  // 3. Callbacks: Customize the session token and behavior.
+  // 3. Callbacks (FIXED - Ab inefficient database call nahi karega)
   callbacks: {
-    // This JWT callback keeps the token's permissions up-to-date on every request.
     async jwt({ token, user }) {
-      // On initial sign-in, add the user's role and permissions to the token.
+      // Yeh sirf initial sign-in par run hoga
       if (user) {
         token.role = user.role;
         token.permissions = user.permissions;
       }
-      
-      // On subsequent requests, re-fetch the user from the DB to get the latest data.
-      const dbUser = await User.findOne({ email: token.email });
-      if (dbUser) {
-        token.role = dbUser.role;
-        token.permissions = dbUser.permissions;
-      }
-      
       return token;
     },
-    // This session callback makes the role and permissions available on the client side.
     async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role;
-        session.user.permissions = token.permissions;
-      }
+      // Token se data session mein daal dega
+      session.user.role = token.role;
+      session.user.permissions = token.permissions;
       return session;
     }
   },
 
-  // 4. Events: Actions that happen on successful authentication events.
+  // 4. Events (FIXED - Ab IP address/header bug nahi aayega)
   events: {
-    // This is the best place to record login history as it has access to the request object.
     async signIn(message) {
       try {
-        const ip = message.req.headers["x-forwarded-for"] || message.req.socket.remoteAddress;
-        const userAgent = message.req.headers["user-agent"];
-
         const loginRecord = new LoginHistory({
           email: message.user.email,
-          ipAddress: ip,
-          userAgent: userAgent,
         });
         await loginRecord.save();
-        console.log("LOGIN RECORDED with IP for:", message.user.email);
+        console.log("LOGIN RECORDED for:", message.user.email);
       } catch (error) {
         console.error("Failed to record login history:", error);
       }

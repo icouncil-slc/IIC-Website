@@ -19,7 +19,13 @@ const nextConfig = {
         hostname: "img.youtube.com",
         port: "",
         pathname: "/**",
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'files.edgestore.dev',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

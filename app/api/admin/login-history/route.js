@@ -7,7 +7,9 @@ import LoginHistory from "@/models/LoginHistory";
 
 export async function GET(req) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'Admin') {
+  
+  const authorizedRoles = ['Admin', 'Moderator'];
+  if (!session || !authorizedRoles.includes(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

@@ -9,13 +9,19 @@ async function isAdminSession(session) {
   return session?.user?.role === 'Admin';
 }
 
+// Helper function to check if the user is an Admin OR Moderator
+async function isAuthorizedSession(session) {
+  const authorizedRoles = ['Admin', 'Moderator'];
+  return session?.user?.email && authorizedRoles.includes(session.user.role);
+}
+
 // GET: Fetch ALL users for the admin dashboard
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!await isAdminSession(session)) {
+  if (!await isAuthorizedSession(session)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
-
+  console.log("Admin user:", session.user.email);
   try {
     await dbConnect();
     // This now fetches all users so the admin can manage them
