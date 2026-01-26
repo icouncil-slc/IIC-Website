@@ -55,8 +55,7 @@ export default function TeamSection({ teamData }) {
       {/* Faculty Coordinators */}
       <motion.div
         initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
+        animate="show"
         variants={container}
       >
         <h2 className="text-center text-4xl font-bold mb-12 text-[#003566]">
@@ -72,8 +71,7 @@ export default function TeamSection({ teamData }) {
       {/* Student Coordinators */}
       <motion.div
         initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.2, delay: 0.5 }}
+        animate="show"
         variants={container}
         className="mt-20"
       >
