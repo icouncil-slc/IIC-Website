@@ -14,7 +14,7 @@ export default function Page() {
         sec_sub="Our team will review and connect with you"
         btn1="Back to Home"
         btn2="View Events"
-        image="/assets/hero-idea.png"
+        image="/assets/submit-proposal.png"
       />
       <AnimatedSection>
         <div className="max-w-4xl mx-auto p-6">

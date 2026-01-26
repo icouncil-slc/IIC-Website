@@ -26,9 +26,9 @@ const page = () => {
         <Timeline />
       </AnimatedSection>
 
-      <AnimatedSection delay={0.35}>
+      {/* <AnimatedSection delay={0.35}>
         <SuccessStories />
-      </AnimatedSection>
+      </AnimatedSection> */}
 
       <AnimatedSection delay={0.4}>
         <CTA

@@ -77,7 +77,7 @@ export default function AddEventPage() {
   const { edgestore } = useEdgeStore();
 
   const handlePDFUpload = async (file) => {
-    const res = await edgestore.publicFiles.upload({
+    const res = await edgestore.pdfs.upload({
       file,
       onProgressChange: (progress) => {
         console.log("Progress:", progress);
@@ -91,6 +91,20 @@ export default function AddEventPage() {
     }));
   };
 
+  const handleImageUpload = async (file, fieldName) => {
+    const res = await edgestore.publicFiles.upload({
+      file,
+      onProgressChange: (progress) => {
+        console.log("Progress:", progress);
+      },
+    });
+
+    setForm((prev) => ({
+      ...prev,
+      [fieldName]: res.url,
+    }));
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6 lg:p-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
@@ -100,7 +114,7 @@ export default function AddEventPage() {
         onSubmit={handleSubmit}
         className="space-y-6 bg-white p-6 rounded-lg shadow-md"
       >
-        {["title", "primaryImage", "secondaryImage", "time", "prize", "description","googleFormLink","category"].map((field) => (
+        {["title", "time", "prize", "description","googleFormLink","category"].map((field) => (
           <div key={field} className="space-y-1">
             <label className="text-sm font-medium text-gray-700 capitalize">
               {field}
@@ -116,6 +130,63 @@ export default function AddEventPage() {
             />
           </div>
         ))}
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">
+            Primary Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file, "primaryImage");
+            }}
+            className="block w-full border border-gray-300 px-4 py-2 rounded-md"
+            required={!form.primaryImage}
+          />
+          {form.primaryImage && (
+            <p className="text-xs text-green-600 mt-1">
+              ✅ Image uploaded:{" "}
+              <a
+                href={form.primaryImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                View primary image
+              </a>
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">
+            Secondary Image (optional)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file, "secondaryImage");
+            }}
+            className="block w-full border border-gray-300 px-4 py-2 rounded-md"
+          />
+          {form.secondaryImage && (
+            <p className="text-xs text-green-600 mt-1">
+              ✅ Image uploaded:{" "}
+              <a
+                href={form.secondaryImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                View secondary image
+              </a>
+            </p>
+          )}
+        </div>
 
         {/* Timeline Dynamic Fields */}
         <div className="space-y-2">

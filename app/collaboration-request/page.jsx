@@ -14,7 +14,7 @@ export default function Page() {
         sec_sub="Tell us how we can work together"
         btn1="Back"
         btn2="Contact"
-        image="/assets/hero-collab.png"
+        image="/assets/collaborate.png"
       />
       <AnimatedSection>
         <div className="max-w-4xl mx-auto p-6">
