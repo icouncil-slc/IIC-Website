@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 
 const studentRoles = [
-  "President", "Coordinator", "Outreach Coordinator", "Innovation Activity Coordinator", 
+  "President", "Vice President", "Coordinator", "Outreach Coordinator", "Innovation Activity Coordinator", 
   "Secretary", "Treasurer", "Marketing And PR Head", "Content Head", "Event Management Head", 
   "Graphics Head", "Technical Head", "Marketing & PR", "Content Writing", 
   "Event Management", "Graphics Team", "Technical Team"
