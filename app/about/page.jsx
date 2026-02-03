@@ -12,7 +12,7 @@ const page = () => {
       <Hero
         title="About Institution's"
         subtitle="Nurturing Creativity, Empowering Innovation"
-        sec_title="Institution's Council"
+        sec_title="Innovation Council"
         sec_sub="Shyam Lal College : University of Delhi"
         btn1="Join the Movement"
         btn2="Explore Events"
