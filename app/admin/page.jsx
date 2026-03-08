@@ -377,6 +377,18 @@ export default function AdminAndMemberPage() {
             {" "}
             <Users /> Manage Team
           </Link>
+<<<<<<< HEAD
+=======
+          <Link
+            href="/manage-hero"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "justify-start gap-2"
+            )}
+          >
+            <PlusCircle /> Hero Slider
+          </Link>
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
         </div>
       </div>
 

@@ -29,22 +29,35 @@ const Footer = () => {
             className="h-28 sm:h-28 md:h-32 mb-4"
           />
           <div className="flex items-center gap-4 mt-2">
+<<<<<<< HEAD
             <a
+=======
+            <a target="_blank"
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
               href="#"
               className="hover:text-orange-400 transition-colors"
               aria-label="Facebook"
             >
               <FaFacebookF size={20} />
             </a>
+<<<<<<< HEAD
             <a
+=======
+            <a target="_blank"
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
               href="https://www.instagram.com/iic.slc?igsh=MTgwM3FncTliNXJsdg=="
               className="hover:text-orange-400 transition-colors"
               aria-label="Instagram"
             >
               <FaInstagram size={20} />
             </a>
+<<<<<<< HEAD
             <a
               href="#"
+=======
+            <a target="_blank"
+              href="https://www.youtube.com/@iicSLC"
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
               className="hover:text-orange-400 transition-colors"
               aria-label="YouTube"
             >
@@ -166,7 +179,11 @@ const Footer = () => {
       <hr className="border-t-4 border-orange-500 mt-10 w-full" />
 
       <p className="text-center text-md sm:text-lg mt-6 md:mt-8">
+<<<<<<< HEAD
         © 2025 Institution’s Innovation Council – Shyam Lal College, University
+=======
+        © 2026 Institution’s Innovation Council – Shyam Lal College, University
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
         of Delhi. All rights reserved.
       </p>
     </footer>

@@ -8,10 +8,19 @@ import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERROR KO FIX KAREGA
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
+<<<<<<< HEAD
     { sender: "bot", text: "Welcome to IIC | SLC Query Bot!" },
     {
       sender: "bot",
       text: "Please ask queries only related to Shyam Lal College's Innovation Council.",
+=======
+    { sender: "bot", text: "Welcome to IIC | SLC Query Bot!", eventTable: null, eventDetails: null },
+    {
+      sender: "bot",
+      text: "Please ask queries only related to Shyam Lal College's Innovation Council.",
+      eventTable: null,
+      eventDetails: null,
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
     },
   ]);
   const [input, setInput] = useState("");
@@ -62,8 +71,21 @@ export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERR
 
       const data = await res.json();
       const botReply = data.response || "Sorry, I couldn't process that.";
+<<<<<<< HEAD
       
       setMessages((prev) => [...prev, { sender: "bot", text: botReply }]);
+=======
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: botReply,
+          eventTable: Array.isArray(data?.eventTable) ? data.eventTable : null,
+          eventDetails: Array.isArray(data?.eventDetails) ? data.eventDetails : null,
+        },
+      ]);
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
 
     } catch (error) {
       console.error("Chatbot fetch error:", error);
@@ -119,7 +141,49 @@ export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERR
                       : "bg-orange-600 text-white rounded-tr-none"
                   }`}
                 >
+<<<<<<< HEAD
                   {msg.text}
+=======
+                  <p>{msg.text}</p>
+                  {msg.sender === "bot" &&
+                    Array.isArray(msg.eventDetails) &&
+                    msg.eventDetails.length > 0 && (
+                      <div className="mt-3 rounded-md border border-gray-200 bg-white p-2 text-xs space-y-1">
+                        {msg.eventDetails.map((item, itemIdx) => (
+                          <div key={`${item.label}-${itemIdx}`} className="text-gray-800">
+                            <span className="font-bold">{item.label}: </span>
+                            <span>{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  {msg.sender === "bot" && Array.isArray(msg.eventTable) && msg.eventTable.length > 0 && (
+                    <div className="mt-3 overflow-x-auto rounded-md border border-gray-200 bg-white">
+                      <table className="min-w-full text-xs">
+                        <thead className="bg-gray-100 text-gray-700">
+                          <tr>
+                            <th className="px-2 py-1 text-left font-bold">Event Name</th>
+                            <th className="px-2 py-1 text-left font-bold">Date</th>
+                            <th className="px-2 py-1 text-left font-bold">Time</th>
+                            <th className="px-2 py-1 text-left font-bold">Venue</th>
+                            <th className="px-2 py-1 text-left font-bold">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {msg.eventTable.map((row, rowIdx) => (
+                            <tr key={`${row.title}-${rowIdx}`} className="border-t border-gray-100">
+                              <td className="px-2 py-1 align-top">{row.title || "Event"}</td>
+                              <td className="px-2 py-1 align-top">{row.date || "TBA"}</td>
+                              <td className="px-2 py-1 align-top">{row.time || "TBA"}</td>
+                              <td className="px-2 py-1 align-top">{row.venue || "TBA"}</td>
+                              <td className="px-2 py-1 align-top">{row.description || "TBA"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+>>>>>>> 26a0218 (Fixed chatbot & hero slider)
                 </div>
               </div>
             ))}
