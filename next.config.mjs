@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-<<<<<<< HEAD
     images: {
     remotePatterns: [
       {
@@ -26,20 +25,9 @@ const nextConfig = {
         hostname: 'files.edgestore.dev',
         port: '',
         pathname: '/**',
-=======
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
       },
     ],
   },
 };
 
-<<<<<<< HEAD
 export default nextConfig;
-=======
-export default nextConfig;
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
