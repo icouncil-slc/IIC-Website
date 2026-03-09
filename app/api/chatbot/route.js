@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-<<<<<<< HEAD
-=======
 import fs from "fs";
 import path from "path";
 import { read, utils, SSF } from "xlsx";
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
 
 // Note: Using the model recommended for Grounding (RAG-lite)
 const MODEL_NAME = "gemini-2.5-flash"; 
@@ -13,13 +10,6 @@ const MODEL_NAME = "gemini-2.5-flash";
 // Initialize with the SECURE, server-side environment variable
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-<<<<<<< HEAD
-const IIC_SYSTEM_INSTRUCTION = `You are a professional and concise chatbot assistant for the Institution's Innovation Council (IIC) at Shyam Lal College. Your tone is helpful and direct. You must follow these rules strictly:
-1. Keep all responses very short, maximum 1-3 sentences.
-2. Do not use markdown (no bolding or lists).
-3. Directly answer the user's question. Do not introduce yourself or list example questions.
-4. Only answer questions related to IIC Shyam Lal College. If asked about something else, politely state that you can only help with IIC-related queries.`;
-=======
 const IIC_SYSTEM_INSTRUCTION = `You are a professional and concise chatbot assistant for the Institution's Innovation Council (IIC) at Shyam Lal College, University of Delhi. Your tone is helpful and direct. You must follow these rules strictly:
 1. Keep all responses very short, maximum 1-3 sentences.
 2. Do not use markdown (no bolding or lists).
@@ -303,7 +293,6 @@ function buildUpcomingEventReply(normalized) {
 
   return { text, table: [], details };
 }
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
 
 export async function POST(req) {
   try {
@@ -313,24 +302,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-<<<<<<< HEAD
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
-    const chat = model.startChat({
-      config: {
-        systemInstruction: IIC_SYSTEM_INSTRUCTION,
-        // v-- YEH HAI AAPKA NAYA, FOCUSED SEARCH --v
-        tools: [{
-          googleSearch: {
-            // Yahan hum Google ko bata rahe hain ki sirf in websites par search karo
-            scope: "SPECIFIC_SITES",
-            sites: [
-              "https://iic-slc.live",
-            ]  
-          }
-        }]
-      },
-=======
     // Basic topic filter to keep the bot focused strictly on IIC Shyam Lal College
     const lowerMessage = String(message).toLowerCase();
     const iicKeywords = [
@@ -415,7 +386,6 @@ export async function POST(req) {
           parts: [{ text: "Understood." }],
         },
       ],
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
     });
 
     // v-- YEH HAI FIX #1: Object ke bajaye seedha string 'message' bhej raha hai --v
@@ -427,12 +397,6 @@ export async function POST(req) {
     // Optional: Extract citations/sources from the grounding metadata
     // Grounding ke bina, 'sources' hamesha empty rahega
     const groundingMetadata = result.response.candidates?.[0]?.groundingMetadata;
-<<<<<<< HEAD
-    const sources = groundingMetadata?.groundingChunks?.map(chunk => ({
-      title: chunk.title,
-      uri: chunk.web.uri,
-    })) || [];
-=======
     const sources =
       groundingMetadata?.groundingChunks
         ?.map((chunk) => ({
@@ -440,7 +404,6 @@ export async function POST(req) {
           uri: chunk.web?.uri,
         }))
         .filter((s) => s.uri) || [];
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
 
     // Return the response and sources
     return NextResponse.json({ 
@@ -453,7 +416,3 @@ export async function POST(req) {
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> 26a0218 (Fixed chatbot & hero slider)

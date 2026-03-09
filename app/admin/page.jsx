@@ -377,8 +377,6 @@ export default function AdminAndMemberPage() {
             {" "}
             <Users /> Manage Team
           </Link>
-<<<<<<< HEAD
-=======
           <Link
             href="/manage-hero"
             className={cn(
@@ -388,7 +386,6 @@ export default function AdminAndMemberPage() {
           >
             <PlusCircle /> Hero Slider
           </Link>
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
         </div>
       </div>
 

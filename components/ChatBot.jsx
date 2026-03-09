@@ -8,19 +8,12 @@ import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERROR KO FIX KAREGA
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-<<<<<<< HEAD
-    { sender: "bot", text: "Welcome to IIC | SLC Query Bot!" },
-    {
-      sender: "bot",
-      text: "Please ask queries only related to Shyam Lal College's Innovation Council.",
-=======
     { sender: "bot", text: "Welcome to IIC | SLC Query Bot!", eventTable: null, eventDetails: null },
     {
       sender: "bot",
       text: "Please ask queries only related to Shyam Lal College's Innovation Council.",
       eventTable: null,
       eventDetails: null,
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
     },
   ]);
   const [input, setInput] = useState("");
@@ -71,10 +64,6 @@ export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERR
 
       const data = await res.json();
       const botReply = data.response || "Sorry, I couldn't process that.";
-<<<<<<< HEAD
-      
-      setMessages((prev) => [...prev, { sender: "bot", text: botReply }]);
-=======
 
       setMessages((prev) => [
         ...prev,
@@ -85,7 +74,6 @@ export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERR
           eventDetails: Array.isArray(data?.eventDetails) ? data.eventDetails : null,
         },
       ]);
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
 
     } catch (error) {
       console.error("Chatbot fetch error:", error);
@@ -141,9 +129,6 @@ export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERR
                       : "bg-orange-600 text-white rounded-tr-none"
                   }`}
                 >
-<<<<<<< HEAD
-                  {msg.text}
-=======
                   <p>{msg.text}</p>
                   {msg.sender === "bot" &&
                     Array.isArray(msg.eventDetails) &&
@@ -183,7 +168,6 @@ export default function ChatBot() { // <-- YEH 'export default' VERCEL BUILD ERR
                       </table>
                     </div>
                   )}
->>>>>>> 26a0218 (Fixed chatbot & hero slider)
                 </div>
               </div>
             ))}
