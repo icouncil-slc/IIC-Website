@@ -3,6 +3,7 @@ import dbConnect from "@/lib/mongodb";
 import TeamMember from "@/models/TeamMember";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { revalidatePath } from "next/cache";
 
 // GET (Public): Fetches leadership team members, sorted by a specific role hierarchy
 export async function GET() {
@@ -81,6 +82,8 @@ export async function POST(req) {
       birthdayDate: body.birthdayDate || null,
       order: body.order,
     });
+
+    revalidatePath("/team");
 
     return NextResponse.json(newMember, { status: 201 });
   } catch (error) {

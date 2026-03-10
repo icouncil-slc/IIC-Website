@@ -4,6 +4,10 @@ import Hero from "@/components/Hero";
 import TeamSection from "@/components/TeamSection";
 import dbConnect from "@/lib/mongodb";
 import TeamMember from "@/models/TeamMember";
+import { unstable_noStore as noStore } from "next/cache";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function getRoleSorter(roleOrder) {
   const roleIndex = (role) => {
@@ -24,6 +28,7 @@ function getRoleSorter(roleOrder) {
 
 async function getTeamData() {
   try {
+    noStore();
     await dbConnect();
 
     const facultyRoleOrder = ["IIC, SLC Principal", "Convener"];

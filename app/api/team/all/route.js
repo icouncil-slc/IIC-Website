@@ -3,6 +3,7 @@ import dbConnect from "@/lib/mongodb";
 import TeamMember from "@/models/TeamMember";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
+import { revalidatePath } from "next/cache";
 
 // Helper function to check for authorized roles
 async function isAuthorized(session) {
@@ -72,6 +73,8 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Member not found." }, { status: 404 });
     }
 
+    revalidatePath("/team");
+
     return NextResponse.json(updatedMember);
   } catch (error) {
     return NextResponse.json({ error: "Failed to update member." }, { status: 400 });
@@ -98,6 +101,8 @@ export async function DELETE(req) {
     if (!deletedMember) {
       return NextResponse.json({ error: "Member not found." }, { status: 404 });
     }
+
+    revalidatePath("/team");
 
     return NextResponse.json({ message: "Member deleted successfully." });
   } catch (error) {
