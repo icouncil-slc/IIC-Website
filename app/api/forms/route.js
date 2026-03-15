@@ -70,7 +70,7 @@ export async function POST(req) {
     // Thank you email to user
     const userHtml = `
       <div style="font-family: Arial, sans-serif; max-width:700px;">
-        <h2>Thanks for contacting IIC SLC</h2>
+        <h2>Registration Confirmation</h2>
         <p>Hi ${name},</p>
         <p>Thanks for your ${
           type === 'idea'
