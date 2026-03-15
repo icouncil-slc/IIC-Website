@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
     webinars: { type: Boolean, default: false },
     past_events: { type: Boolean, default: false },
     gallery: { type: Boolean, default: false },
+    registration_form: { type: Boolean, default: false },
   },
 }, { timestamps: true });
 

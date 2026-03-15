@@ -87,6 +87,7 @@ export default function AdminAndMemberPage() {
     webinars: false,
     past_events: false,
     gallery: false,
+    registration_form: false,
   });
   const [allUsers, setAllUsers] = useState([]);
 
@@ -173,6 +174,7 @@ export default function AdminAndMemberPage() {
         webinars: false,
         past_events: false,
         gallery: false,
+        registration_form: false,
       });
       setMemberRole("Member");
       fetchAllUsers();
@@ -386,6 +388,15 @@ export default function AdminAndMemberPage() {
           >
             <PlusCircle /> Hero Slider
           </Link>
+          <Link
+            href="/manage-registration-form"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "justify-start gap-2"
+            )}
+          >
+            <PlusCircle /> Registration Form
+          </Link>
         </div>
       </div>
 
@@ -561,6 +572,15 @@ export default function AdminAndMemberPage() {
             className={cn(buttonVariants(), "justify-between w-full")}
           >
             <span>Add Past Event</span>
+            <ChevronRight />
+          </Link>
+        )}
+        {session.user.permissions?.registration_form && (
+          <Link
+            href="/manage-registration-form"
+            className={cn(buttonVariants(), "justify-between w-full")}
+          >
+            <span>Manage Registration Form</span>
             <ChevronRight />
           </Link>
         )}
