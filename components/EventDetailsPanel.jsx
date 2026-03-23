@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -7,6 +8,21 @@ const TABS = ["DESCRIPTION", "STAGES AND TIMELINES", "CONTACTS"];
 
 const EventDetailsPanel = ({ event, onClose }) => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
+  const router = useRouter();
+  const registrationType =
+    event.registrationType || (event.googleFormLink ? "external" : "none");
+  const hasRegistration = registrationType === "internal" || Boolean(event.googleFormLink);
+
+  const handleRegister = () => {
+    if (registrationType === "internal" && event._id) {
+      router.push(`/register?eventId=${event._id}`);
+      return;
+    }
+
+    if (event.googleFormLink) {
+      window.open(`${event.googleFormLink}`, "_blank");
+    }
+  };
 
   const contentMap = {
     DESCRIPTION:
@@ -107,10 +123,11 @@ const EventDetailsPanel = ({ event, onClose }) => {
             <div className="mt-auto pt-4 grid grid-cols-2 md:grid-cols-2 gap-4">
               <Button
                 size="lg"
-                onClick={() => window.open(`${event.googleFormLink}`, "_blank")}
+                onClick={handleRegister}
+                disabled={!hasRegistration}
                 className="bg-orange-600 hover:bg-orange-800 text-white font-semibold shadow-md hover:shadow-lg transition-all"
               >
-                REGISTER NOW
+                {hasRegistration ? "REGISTER NOW" : "REGISTRATION CLOSED"}
               </Button>
               {event.pdf ? (
                 <a

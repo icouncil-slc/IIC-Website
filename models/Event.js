@@ -8,6 +8,11 @@ const EventSchema = new mongoose.Schema({
   time: String,
   prize: String,
   googleFormLink: String,
+  registrationType: {
+    type: String,
+    enum: ["internal", "external", "none"],
+    default: "none",
+  },
   category:String,
   description: String,
   timeline: String,

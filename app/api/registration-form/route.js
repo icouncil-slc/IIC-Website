@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import dbConnect from '@/lib/mongodb';
 import RegistrationFormConfig from '@/models/RegistrationFormConfig';
+import Event from '@/models/Event';
 import { authOptions } from '../auth/[...nextauth]/route';
 import {
+  buildRegistrationFormConfigFromEvent,
   defaultRegistrationFormConfig,
   normalizeRegistrationFormConfig,
 } from '@/lib/registrationFormDefaults';
@@ -14,9 +16,30 @@ function canManageRegistrationForm(session) {
   return Boolean(session?.user?.permissions?.registration_form);
 }
 
-export async function GET() {
+export async function GET(req) {
   await dbConnect();
-  const config = await RegistrationFormConfig.findOne({ key: 'singleton' }).lean();
+  const { searchParams } = new URL(req.url);
+  const eventId = searchParams.get('eventId');
+
+  if (eventId) {
+    const event = await Event.findById(eventId).lean();
+    if (!event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    const eventDefaults = buildRegistrationFormConfigFromEvent(event);
+    const config = await RegistrationFormConfig.findOne({
+      $or: [{ eventId }, { key: `event:${eventId}` }],
+    }).lean();
+    return NextResponse.json({
+      eventId,
+      ...normalizeRegistrationFormConfig(config || {}, eventDefaults),
+    });
+  }
+
+  const config = await RegistrationFormConfig.findOne({
+    key: { $in: ['global-default', 'singleton'] },
+  }).lean();
   if (!config) {
     return NextResponse.json(defaultRegistrationFormConfig);
   }
@@ -31,12 +54,33 @@ export async function POST(req) {
   }
 
   await dbConnect();
+  const { searchParams } = new URL(req.url);
+  const eventId = searchParams.get('eventId');
   const body = await req.json();
-  const normalized = normalizeRegistrationFormConfig(body);
 
+  if (eventId) {
+    const event = await Event.findById(eventId).lean();
+    if (!event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    const normalized = normalizeRegistrationFormConfig(body, buildRegistrationFormConfigFromEvent(event));
+    const updated = await RegistrationFormConfig.findOneAndUpdate(
+      { eventId },
+      { key: `event:${eventId}`, eventId, ...normalized },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).lean();
+
+    return NextResponse.json({
+      eventId,
+      ...normalizeRegistrationFormConfig(updated, buildRegistrationFormConfigFromEvent(event)),
+    });
+  }
+
+  const normalized = normalizeRegistrationFormConfig(body);
   const updated = await RegistrationFormConfig.findOneAndUpdate(
-    { key: 'singleton' },
-    { key: 'singleton', ...normalized },
+    { key: { $in: ['global-default', 'singleton'] } },
+    { key: 'global-default', eventId: null, ...normalized },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   ).lean();
 

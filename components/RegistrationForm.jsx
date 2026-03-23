@@ -28,7 +28,7 @@ const initialForm = {
   otherCollege: '',
 };
 
-export default function RegistrationForm({ config = defaultRegistrationFormConfig }) {
+export default function RegistrationForm({ config = defaultRegistrationFormConfig, eventId = '' }) {
   const [form, setForm] = useState(initialForm);
   const [customAnswers, setCustomAnswers] = useState(() => buildInitialAnswers(config.extraQuestions));
   const [loading, setLoading] = useState(false);
@@ -113,6 +113,7 @@ export default function RegistrationForm({ config = defaultRegistrationFormConfi
         email: form.email.trim(),
         message: `Registration for ${config.eventTitle}`,
         extra: {
+          eventId,
           mobile: form.mobile.trim(),
           course: form.course.trim(),
           year: form.year,

@@ -7,7 +7,7 @@ import { Download, Loader2, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-export default function RegistrationSubmissions() {
+export default function RegistrationSubmissions({ eventId = "" }) {
   const [registrations, setRegistrations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -15,7 +15,8 @@ export default function RegistrationSubmissions() {
   const fetchRegistrations = async () => {
     try {
       setIsLoading(true);
-      const { data } = await axios.get("/api/admin/registrations");
+      const query = eventId ? `?eventId=${eventId}` : "";
+      const { data } = await axios.get(`/api/admin/registrations${query}`);
       setRegistrations(data.registrations || []);
     } catch (error) {
       console.error("Could not fetch registrations", error);
@@ -29,12 +30,16 @@ export default function RegistrationSubmissions() {
 
   useEffect(() => {
     fetchRegistrations();
-  }, []);
+  }, [eventId]);
 
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      const response = await axios.get("/api/admin/registrations?export=xlsx", {
+      const query = new URLSearchParams();
+      query.set("export", "xlsx");
+      if (eventId) query.set("eventId", eventId);
+
+      const response = await axios.get(`/api/admin/registrations?${query.toString()}`, {
         responseType: "blob",
       });
 
@@ -44,7 +49,7 @@ export default function RegistrationSubmissions() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "registration-submissions.xlsx";
+      link.download = eventId ? "registration-submissions-event.xlsx" : "registration-submissions.xlsx";
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -67,7 +72,9 @@ export default function RegistrationSubmissions() {
             Registration Submissions
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            View recent registrations and export the full list to Excel.
+            {eventId
+              ? "View registrations for the selected event and export them to Excel."
+              : "View recent registrations and export the full list to Excel."}
           </p>
         </div>
         <div className="flex gap-2">

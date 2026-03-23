@@ -15,7 +15,8 @@ const RegistrationQuestionSchema = new mongoose.Schema(
 
 const RegistrationFormConfigSchema = new mongoose.Schema(
   {
-    key: { type: String, required: true, unique: true, default: 'singleton' },
+    key: { type: String, trim: true, default: null },
+    eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', default: null, index: true },
     eventTitle: { type: String, required: true },
     eventSubtitle: { type: String, required: true },
     eventDate: { type: String, required: true },

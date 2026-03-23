@@ -37,7 +37,10 @@ export default function ManageRegistrationFormPage() {
     return Boolean(session?.user?.permissions?.registration_form);
   }, [session]);
 
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(defaultRegistrationFormConfig);
 
@@ -47,10 +50,54 @@ export default function ManageRegistrationFormPage() {
 
   useEffect(() => {
     let cancelled = false;
+
+    const loadEvents = async () => {
+      try {
+        setEventsLoading(true);
+        const res = await fetch('/api/events?all=1');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Failed to load events');
+
+        const allEvents = [...(data.upcoming || []), ...(data.past || [])];
+        const internalFirst = allEvents
+          .map((event) => ({
+            ...event,
+            registrationType: event.registrationType || (event.googleFormLink ? 'external' : 'none'),
+          }))
+          .sort((a, b) => {
+            if (a.registrationType === 'internal' && b.registrationType !== 'internal') return -1;
+            if (a.registrationType !== 'internal' && b.registrationType === 'internal') return 1;
+            return new Date(b.date || 0) - new Date(a.date || 0);
+          });
+
+        if (!cancelled) {
+          setEvents(internalFirst);
+          if (internalFirst[0]?._id) {
+            setSelectedEventId((current) => current || internalFirst[0]._id);
+          }
+        }
+      } catch (error) {
+        if (!cancelled) toast.error(error.message || 'Could not load events.');
+      } finally {
+        if (!cancelled) setEventsLoading(false);
+      }
+    };
+
+    loadEvents();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEventId) return;
+
+    let cancelled = false;
+
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/registration-form');
+        const res = await fetch(`/api/registration-form?eventId=${selectedEventId}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error || 'Failed to load settings');
         if (!cancelled) setForm({ ...defaultRegistrationFormConfig, ...data });
@@ -60,11 +107,14 @@ export default function ManageRegistrationFormPage() {
         if (!cancelled) setLoading(false);
       }
     };
+
     load();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedEventId]);
+
+  const selectedEvent = events.find((event) => event._id === selectedEventId) || null;
 
   const updateField = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -151,9 +201,14 @@ export default function ManageRegistrationFormPage() {
       return;
     }
 
+    if (!selectedEventId) {
+      toast.error('Please select an event first.');
+      return;
+    }
+
     try {
       setSaving(true);
-      const res = await fetch('/api/registration-form', {
+      const res = await fetch(`/api/registration-form?eventId=${selectedEventId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -169,10 +224,10 @@ export default function ManageRegistrationFormPage() {
     }
   };
 
-  if (loading) {
+  if (eventsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading...
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading events...
       </div>
     );
   }
@@ -193,6 +248,22 @@ export default function ManageRegistrationFormPage() {
     );
   }
 
+  if (events.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+          <h1 className="text-2xl font-bold text-[#08246A]">No Events Found</h1>
+          <p className="mt-3 text-sm leading-7 text-gray-600">
+            Add an event first, then come back here to manage its registration form.
+          </p>
+          <Button className="mt-6" onClick={() => router.push('/add-event')}>
+            Add Event
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 px-3 py-6 sm:px-4 sm:py-10">
       <div className="mx-auto max-w-6xl rounded-2xl bg-white p-4 shadow-lg sm:p-6">
@@ -200,223 +271,260 @@ export default function ManageRegistrationFormPage() {
           <div>
             <h1 className="text-2xl font-bold text-[#08246A]">Registration Form Manager</h1>
             <p className="mt-1 text-sm text-gray-600">
-              Update event details, WhatsApp CTA, and add extra questions without editing code.
+              Pick an event, then update its registration content and custom questions.
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => router.push('/admin')}>
               Back
             </Button>
-            <Button onClick={save} disabled={saving || !canEdit}>
+            <Button onClick={save} disabled={saving || !canEdit || !selectedEventId}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Save
             </Button>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-2xl border p-5">
-            <h2 className="text-lg font-semibold text-gray-800">Event Details</h2>
-            <div className="mt-4 grid gap-4">
-              <EditorField label="Event Title">
-                <input value={form.eventTitle} onChange={(e) => updateField('eventTitle', e.target.value)} className={editorInputClass} />
-              </EditorField>
-              <EditorField label="Event Subtitle">
-                <textarea
-                  value={form.eventSubtitle}
-                  onChange={(e) => updateField('eventSubtitle', e.target.value)}
-                  className={`${editorInputClass} min-h-[90px]`}
-                />
-              </EditorField>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <EditorField label="Date">
-                  <input value={form.eventDate} onChange={(e) => updateField('eventDate', e.target.value)} className={editorInputClass} />
-                </EditorField>
-                <EditorField label="Time">
-                  <input value={form.eventTime} onChange={(e) => updateField('eventTime', e.target.value)} className={editorInputClass} />
-                </EditorField>
-                <EditorField label="Mode">
-                  <input value={form.eventMode} onChange={(e) => updateField('eventMode', e.target.value)} className={editorInputClass} />
-                </EditorField>
+        <div className="mt-6 rounded-2xl border p-5">
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+            <EditorField label="Select Event">
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className={editorInputClass}
+              >
+                {events.map((event) => (
+                  <option key={event._id} value={event._id}>
+                    {event.title} {event.registrationType === 'internal' ? '(Website Form)' : ''}
+                  </option>
+                ))}
+              </select>
+            </EditorField>
+            {selectedEvent ? (
+              <div className="rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Registration Type: <span className="font-semibold text-slate-900">{selectedEvent.registrationType}</span>
               </div>
-            </div>
-
-            <h2 className="mt-8 text-lg font-semibold text-gray-800">Community Join Step</h2>
-            <div className="mt-4 grid gap-4">
-              <EditorField label="WhatsApp Link">
-                <input
-                  value={form.communityLink}
-                  onChange={(e) => updateField('communityLink', e.target.value)}
-                  className={editorInputClass}
-                />
-              </EditorField>
-              <EditorField label="Button Label">
-                <input
-                  value={form.communityButtonLabel}
-                  onChange={(e) => updateField('communityButtonLabel', e.target.value)}
-                  className={editorInputClass}
-                />
-              </EditorField>
-              <EditorField label="Join Instructions">
-                <textarea
-                  value={form.communityHelperText}
-                  onChange={(e) => updateField('communityHelperText', e.target.value)}
-                  className={`${editorInputClass} min-h-[90px]`}
-                />
-              </EditorField>
-              <EditorField label="Form Note">
-                <textarea
-                  value={form.submitHelperText}
-                  onChange={(e) => updateField('submitHelperText', e.target.value)}
-                  className={`${editorInputClass} min-h-[90px]`}
-                />
-              </EditorField>
-            </div>
+            ) : null}
           </div>
-
-          <div className="rounded-2xl border p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">Extra Questions</h2>
-                <p className="mt-1 text-sm text-gray-600">
-                  Core fields stay fixed. Use this section to add more questions.
-                </p>
-              </div>
-              <Button type="button" variant="outline" onClick={addQuestion}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Question
-              </Button>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              {form.extraQuestions.length === 0 ? (
-                <div className="rounded-xl border border-dashed p-6 text-sm text-gray-500">
-                  No extra questions yet. Add one to collect more registration details.
-                </div>
-              ) : (
-                form.extraQuestions.map((question, index) => (
-                  <div key={`${question.id}-${index}`} className="rounded-2xl border p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-gray-800">Question {index + 1}</p>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="icon" onClick={() => moveQuestion(index, -1)} disabled={index === 0}>
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => moveQuestion(index, 1)}
-                          disabled={index === form.extraQuestions.length - 1}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeQuestion(index)}
-                          className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-4">
-                      <EditorField label="Question Label">
-                        <input value={question.label} onChange={(e) => updateQuestion(index, { label: e.target.value })} className={editorInputClass} />
-                      </EditorField>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <EditorField label="Question ID">
-                          <input value={question.id} onChange={(e) => updateQuestion(index, { id: e.target.value })} className={editorInputClass} />
-                        </EditorField>
-                        <EditorField label="Field Type">
-                          <select
-                            value={question.type}
-                            onChange={(e) =>
-                              updateQuestion(index, {
-                                type: e.target.value,
-                                options:
-                                  e.target.value === 'select' || e.target.value === 'radio'
-                                    ? question.options?.length
-                                      ? question.options
-                                      : ['Option 1', 'Option 2']
-                                    : [],
-                              })
-                            }
-                            className={editorInputClass}
-                          >
-                            <option value="text">Short text</option>
-                            <option value="textarea">Paragraph</option>
-                            <option value="select">Dropdown</option>
-                            <option value="radio">Multiple choice</option>
-                          </select>
-                        </EditorField>
-                      </div>
-                      <EditorField label="Placeholder">
-                        <input
-                          value={question.placeholder}
-                          onChange={(e) => updateQuestion(index, { placeholder: e.target.value })}
-                          className={editorInputClass}
-                        />
-                      </EditorField>
-                      {(question.type === 'select' || question.type === 'radio') && (
-                        <EditorField label="Options">
-                          <div className="space-y-3">
-                            {(question.options || []).map((option, optionIndex) => (
-                              <div key={`${question.id}-option-${optionIndex}`} className="flex gap-2">
-                                <input
-                                  value={option}
-                                  onChange={(e) => updateOption(index, optionIndex, e.target.value)}
-                                  className={editorInputClass}
-                                  placeholder={`Option ${optionIndex + 1}`}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => removeOption(index, optionIndex)}
-                                  className="shrink-0 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button type="button" variant="outline" onClick={() => addOption(index)}>
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Add Option
-                            </Button>
-                          </div>
-                        </EditorField>
-                      )}
-                      {(question.type === 'select' || question.type === 'radio') && (
-                        <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={question.allowOther}
-                            onChange={(e) => updateQuestion(index, { allowOther: e.target.checked })}
-                            className="h-4 w-4"
-                          />
-                          Allow an "Other" text input
-                        </label>
-                      )}
-                      <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                        <input
-                          type="checkbox"
-                          checked={question.required}
-                          onChange={(e) => updateQuestion(index, { required: e.target.checked })}
-                          className="h-4 w-4"
-                        />
-                        Required question
-                      </label>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          {selectedEvent?.registrationType !== 'internal' ? (
+            <p className="mt-3 text-sm text-amber-700">
+              This event was not created with the website registration form. You can still edit and save a form here,
+              but users will only reach it after the event registration type is set to internal.
+            </p>
+          ) : null}
         </div>
 
-        <RegistrationSubmissions />
+        {loading ? (
+          <div className="mt-6 flex items-center justify-center rounded-2xl border bg-white p-10 text-gray-600">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading form...
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+              <div className="rounded-2xl border p-5">
+                <h2 className="text-lg font-semibold text-gray-800">Event Details</h2>
+                <div className="mt-4 grid gap-4">
+                  <EditorField label="Event Title">
+                    <input value={form.eventTitle} onChange={(e) => updateField('eventTitle', e.target.value)} className={editorInputClass} />
+                  </EditorField>
+                  <EditorField label="Event Subtitle">
+                    <textarea
+                      value={form.eventSubtitle}
+                      onChange={(e) => updateField('eventSubtitle', e.target.value)}
+                      className={`${editorInputClass} min-h-[90px]`}
+                    />
+                  </EditorField>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <EditorField label="Date">
+                      <input value={form.eventDate} onChange={(e) => updateField('eventDate', e.target.value)} className={editorInputClass} />
+                    </EditorField>
+                    <EditorField label="Time">
+                      <input value={form.eventTime} onChange={(e) => updateField('eventTime', e.target.value)} className={editorInputClass} />
+                    </EditorField>
+                    <EditorField label="Mode">
+                      <input value={form.eventMode} onChange={(e) => updateField('eventMode', e.target.value)} className={editorInputClass} />
+                    </EditorField>
+                  </div>
+                </div>
+
+                <h2 className="mt-8 text-lg font-semibold text-gray-800">Community Join Step</h2>
+                <div className="mt-4 grid gap-4">
+                  <EditorField label="WhatsApp Link">
+                    <input
+                      value={form.communityLink}
+                      onChange={(e) => updateField('communityLink', e.target.value)}
+                      className={editorInputClass}
+                    />
+                  </EditorField>
+                  <EditorField label="Button Label">
+                    <input
+                      value={form.communityButtonLabel}
+                      onChange={(e) => updateField('communityButtonLabel', e.target.value)}
+                      className={editorInputClass}
+                    />
+                  </EditorField>
+                  <EditorField label="Join Instructions">
+                    <textarea
+                      value={form.communityHelperText}
+                      onChange={(e) => updateField('communityHelperText', e.target.value)}
+                      className={`${editorInputClass} min-h-[90px]`}
+                    />
+                  </EditorField>
+                  <EditorField label="Form Note">
+                    <textarea
+                      value={form.submitHelperText}
+                      onChange={(e) => updateField('submitHelperText', e.target.value)}
+                      className={`${editorInputClass} min-h-[90px]`}
+                    />
+                  </EditorField>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">Extra Questions</h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Core fields stay fixed. Use this section to add more questions.
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" onClick={addQuestion}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Question
+                  </Button>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  {form.extraQuestions.length === 0 ? (
+                    <div className="rounded-xl border border-dashed p-6 text-sm text-gray-500">
+                      No extra questions yet. Add one to collect more registration details.
+                    </div>
+                  ) : (
+                    form.extraQuestions.map((question, index) => (
+                      <div key={`${question.id}-${index}`} className="rounded-2xl border p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-gray-800">Question {index + 1}</p>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="icon" onClick={() => moveQuestion(index, -1)} disabled={index === 0}>
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => moveQuestion(index, 1)}
+                              disabled={index === form.extraQuestions.length - 1}
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => removeQuestion(index)}
+                              className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-4">
+                          <EditorField label="Question Label">
+                            <input value={question.label} onChange={(e) => updateQuestion(index, { label: e.target.value })} className={editorInputClass} />
+                          </EditorField>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <EditorField label="Question ID">
+                              <input value={question.id} onChange={(e) => updateQuestion(index, { id: e.target.value })} className={editorInputClass} />
+                            </EditorField>
+                            <EditorField label="Field Type">
+                              <select
+                                value={question.type}
+                                onChange={(e) =>
+                                  updateQuestion(index, {
+                                    type: e.target.value,
+                                    options:
+                                      e.target.value === 'select' || e.target.value === 'radio'
+                                        ? question.options?.length
+                                          ? question.options
+                                          : ['Option 1', 'Option 2']
+                                        : [],
+                                  })
+                                }
+                                className={editorInputClass}
+                              >
+                                <option value="text">Short text</option>
+                                <option value="textarea">Paragraph</option>
+                                <option value="select">Dropdown</option>
+                                <option value="radio">Multiple choice</option>
+                              </select>
+                            </EditorField>
+                          </div>
+                          <EditorField label="Placeholder">
+                            <input
+                              value={question.placeholder}
+                              onChange={(e) => updateQuestion(index, { placeholder: e.target.value })}
+                              className={editorInputClass}
+                            />
+                          </EditorField>
+                          {(question.type === 'select' || question.type === 'radio') && (
+                            <EditorField label="Options">
+                              <div className="space-y-3">
+                                {(question.options || []).map((option, optionIndex) => (
+                                  <div key={`${question.id}-option-${optionIndex}`} className="flex gap-2">
+                                    <input
+                                      value={option}
+                                      onChange={(e) => updateOption(index, optionIndex, e.target.value)}
+                                      className={editorInputClass}
+                                      placeholder={`Option ${optionIndex + 1}`}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => removeOption(index, optionIndex)}
+                                      className="shrink-0 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                                <Button type="button" variant="outline" onClick={() => addOption(index)}>
+                                  <PlusCircle className="mr-2 h-4 w-4" />
+                                  Add Option
+                                </Button>
+                              </div>
+                            </EditorField>
+                          )}
+                          {(question.type === 'select' || question.type === 'radio') && (
+                            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={question.allowOther}
+                                onChange={(e) => updateQuestion(index, { allowOther: e.target.checked })}
+                                className="h-4 w-4"
+                              />
+                              Allow an "Other" text input
+                            </label>
+                          )}
+                          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={question.required}
+                              onChange={(e) => updateQuestion(index, { required: e.target.checked })}
+                              className="h-4 w-4"
+                            />
+                            Required question
+                          </label>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <RegistrationSubmissions eventId={selectedEventId} />
+          </>
+        )}
       </div>
     </div>
   );

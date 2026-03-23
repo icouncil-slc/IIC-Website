@@ -59,12 +59,18 @@ export async function GET(req) {
 
   try {
     await dbConnect();
+    const { searchParams } = new URL(req.url);
+    const eventId = searchParams.get("eventId");
 
-    const registrations = await EventRegistration.find({})
+    const query = {};
+    if (eventId) {
+      query["extra.eventId"] = eventId;
+    }
+
+    const registrations = await EventRegistration.find(query)
       .sort({ createdAt: -1 })
       .lean();
 
-    const { searchParams } = new URL(req.url);
     const shouldExport = searchParams.get("export") === "xlsx";
 
     if (shouldExport) {

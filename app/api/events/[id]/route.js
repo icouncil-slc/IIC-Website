@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Event from "@/models/Event";
+import RegistrationFormConfig from "@/models/RegistrationFormConfig";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
@@ -20,6 +21,7 @@ export async function DELETE(req, { params }) {
     if (!deletedEvent) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
+    await RegistrationFormConfig.deleteMany({ eventId: params.id });
     return NextResponse.json({ message: "Event deleted successfully" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete event" }, { status: 500 });

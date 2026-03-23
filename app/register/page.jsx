@@ -8,7 +8,9 @@ export const metadata = {
   description: 'Register with IIC Shyam Lal College using the student registration form.',
 };
 
-export default function RegisterPage() {
+export default function RegisterPage({ searchParams }) {
+  const eventId = typeof searchParams?.eventId === 'string' ? searchParams.eventId : '';
+
   return (
     <main>
       <Hero
@@ -20,7 +22,7 @@ export default function RegisterPage() {
       />
 
       <AnimatedSection>
-        <RegistrationExperience />
+        <RegistrationExperience eventId={eventId} />
       </AnimatedSection>
 
       <Footer />

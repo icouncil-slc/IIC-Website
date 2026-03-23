@@ -22,7 +22,9 @@ export async function POST(req) {
         email: new RegExp(`^${escapeRegExp(trimmedEmail)}$`, 'i'),
       };
 
-      if (extra?.eventTitle) {
+      if (extra?.eventId) {
+        duplicateQuery['extra.eventId'] = extra.eventId;
+      } else if (extra?.eventTitle) {
         duplicateQuery['extra.eventTitle'] = extra.eventTitle;
       }
 

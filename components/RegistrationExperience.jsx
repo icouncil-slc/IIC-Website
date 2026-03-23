@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import RegistrationForm from '@/components/RegistrationForm';
 import { defaultRegistrationFormConfig } from '@/lib/registrationFormDefaults';
 
-export default function RegistrationExperience() {
+export default function RegistrationExperience({ eventId = '' }) {
   const [config, setConfig] = useState(defaultRegistrationFormConfig);
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +16,8 @@ export default function RegistrationExperience() {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/registration-form');
+        const query = eventId ? `?eventId=${eventId}` : '';
+        const res = await fetch(`/api/registration-form${query}`);
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data?.error || 'Failed to load registration settings');
@@ -37,7 +38,7 @@ export default function RegistrationExperience() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [eventId]);
 
   if (loading) {
     return (
@@ -73,7 +74,7 @@ export default function RegistrationExperience() {
           </div>
         </div>
 
-        <RegistrationForm config={config} />
+        <RegistrationForm config={config} eventId={eventId} />
       </div>
     </section>
   );
